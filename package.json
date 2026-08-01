@@ -1,0 +1,18 @@
+{
+  "name": "facebook-instagram-sales-bot",
+  "version": "1.0.0",
+  "description": "Facebook & Instagram Sales Bot with AI responses",
+  "type": "module",
+  "main": "fb-ig-bridge.js",
+  "scripts": {
+    "start": "node fb-ig-bridge.js",
+    "dev": "node fb-ig-bridge.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
