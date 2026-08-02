@@ -7,7 +7,7 @@ app.use(express.json());
 // ✅ الإعدادات
 const FACEBOOK_TOKEN = "EAAZAIZCWAtHGUBSAljRWVsnz0lTdgdu9PYlzXC6ZAZBpG4elRlw4aj5iK0ycEeQpmNiv5KKMSyC8mB5rBOqVxsadtupstokkkvCs7kiWqf7YP83NRk0SZAf3G2dPDfiBaUZCHfUgNiolZAXh1lsk2PsHnYO1SdClDnq3IFosw5ABjZCxCiIY7TYXF8m2GWtVZCN2tJnLPqAZDZD";
 const VERIFY_TOKEN = "VERIFY_TOKEN_123";
-const GROQ_API_KEY = "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";
+const GROQ_API_KEY = "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";
 
 const NAMES = ["رنا", "ساره", "يمني", "ولاء", "هدير", "مني"];
 let currentNameIndex = 0;
