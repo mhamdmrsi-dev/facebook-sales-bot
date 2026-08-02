@@ -8,8 +8,6 @@ app.use(express.json());
 const FACEBOOK_TOKEN = "EAAZAIZCWAtHGUBSAljRWVsnz0lTdgdu9PYlzXC6ZAZBpG4elRlw4aj5iK0ycEeQpmNiv5KKMSyC8mB5rBOqVxsadtupstokkkvCs7kiWqf7YP83NRk0SZAf3G2dPDfiBaUZCHfUgNiolZAXh1lsk2PsHnYO1SdClDnq3IFosw5ABjZCxCiIY7TYXF8m2GWtVZCN2tJnLPqAZDZD";
 const VERIFY_TOKEN = "VERIFY_TOKEN_123";
 const GROQ_API_KEY = "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";
-const GOOGLE_SHEETS_PRODUCTS = "136ZIwwnSReRvyTW-qo1zjIjd7fxvRqFvWuEr3W3GNwU";
-const GOOGLE_SHEETS_SHIPPING = "1ze8i1VH09CEQgqgwT2j9ocPySRIXIcK_tuiHvnFvAI0";
 
 const NAMES = ["رنا", "ساره", "يمني", "ولاء", "هدير", "مني"];
 let currentNameIndex = 0;
@@ -41,13 +39,9 @@ app.post('/webhook', async (req, res) => {
 
           console.log(`📩 رسالة من ${senderId}: ${messageText}`);
 
-          // ✅ احصل على البيانات من Google Sheets
-          const productsData = await getSheetData(GOOGLE_SHEETS_PRODUCTS, "Sheet1!A:E");
-          const shippingData = await getSheetData(GOOGLE_SHEETS_SHIPPING, "Sheet1!A:C");
-
           // ✅ احصل على رد من Groq
           const botName = NAMES[currentNameIndex];
-          const response = await getGroqResponse(messageText, productsData, shippingData, botName);
+          const response = await getGroqResponse(messageText, botName);
 
           // ✅ أرسل الرد على Facebook
           await sendFacebookMessage(senderId, response);
@@ -58,35 +52,16 @@ app.post('/webhook', async (req, res) => {
     res.status(200).send({ status: 'ok' });
   } catch (error) {
     console.error('❌ خطأ:', error.message);
-    res.status(500).send({ error: error.message });
+    res.status(200).send({ status: 'ok' });
   }
 });
 
-// ✅ احصل على البيانات من Google Sheets
-async function getSheetData(sheetId, range) {
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&range=${range}`;
-    const response = await axios.get(url);
-    return response.data;
-  } catch (error) {
-    console.error('خطأ في قراءة Sheets:', error.message);
-    return 'بيانات المنتجات غير متاحة الآن';
-  }
-}
-
 // ✅ احصل على رد من Groq
-async function getGroqResponse(messageText, productsData, shippingData, botName) {
+async function getGroqResponse(messageText, botName) {
   try {
-    const systemPrompt = `أنتِ موظفة مبيعات مصرية احترافية وودية باسم ${botName}. 
-ردي على العملاء بالعامية المصرية فقط بدون فصحى. 
-كوني لطيفة ومحترمة وخدومة. 
-حاولي قفل الأوردر بطريقة احترافية وبدون ضغط على العميل.
+    const systemPrompt = `أنتِ موظفة مبيعات مصرية احترافية وودية باسم ${botName}. ردي على العملاء بالعامية المصرية فقط. كوني لطيفة ومحترمة وخدومة.`;
 
-المنتجات والأسعار:
-${productsData}
-
-تكاليف الشحن:
-${shippingData}`;
+    console.log(`🤖 البوت: ${botName} - الرسالة: ${messageText}`);
 
     const response = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
@@ -96,7 +71,7 @@ ${shippingData}`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: messageText }
         ],
-        max_tokens: 500,
+        max_tokens: 300,
         temperature: 0.7
       },
       {
@@ -107,17 +82,19 @@ ${shippingData}`;
       }
     );
 
-    return response.data.choices[0].message.content;
+    const reply = response.data.choices[0].message.content;
+    console.log(`✅ رد Groq: ${reply}`);
+    return reply;
   } catch (error) {
-    console.error('خطأ في Groq:', error.message);
-    return 'معذرة، حدث خطأ في الرد. حاول مرة أخرى!';
+    console.error('❌ خطأ في Groq:', error.response?.status, error.response?.data?.error || error.message);
+    return `مرحبا! أنا ${botName} 😊 شنو أخبارك؟ اسأل عن أي حاجة تحتاجها!`;
   }
 }
 
 // ✅ أرسل رسالة على Facebook
 async function sendFacebookMessage(recipientId, messageText) {
   try {
-    const response = await axios.post(
+    await axios.post(
       `https://graph.facebook.com/v18.0/me/messages`,
       {
         recipient: { id: recipientId },
@@ -126,11 +103,9 @@ async function sendFacebookMessage(recipientId, messageText) {
       }
     );
 
-    console.log('✅ تم إرسال الرسالة بنجاح');
-    return response.data;
+    console.log(`✅ تم إرسال الرسالة إلى ${recipientId}`);
   } catch (error) {
-    console.error('❌ خطأ في إرسال الرسالة:', error.message);
-    throw error;
+    console.error('❌ خطأ في إرسال الرسالة:', error.response?.data || error.message);
   }
 }
 
